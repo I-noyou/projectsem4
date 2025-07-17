@@ -1,126 +1,113 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sensor Readings</title>
+  <meta charset="UTF-8">
+  <title>IoT Sensor Dashboard</title>
   <style>
     body {
-      background-color: #F5F5F5;
       font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
+      background-image: url(./bg1.jpg);
+      background-size: cover;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 50px;
+
+
+
+    }
+
+    h1 {
+      color: #ff0008;
+      margin-bottom: 40px;
+    }
+
+    .main-container {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+
     }
 
     .data-container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 20px;
-      width: 80%;
-      margin: 30px auto;
-      padding: 20px;
-      background-color: #FFF;
-      box-shadow: 0 2px 20px rgba(0, 0, 0,0.1);
-      border-radius: 10px;
-    }
-
-    .data-item {
-      text-align: center;
-      flex: 1 1 200px;
-    }
-
-    .data-item h2 {
       font-size: 20px;
-      margin-bottom: 10px;
+      margin: 10px 0;
+      width: 30%;
+      height: 200px;
+      border: solid black 2px;
+      border-radius: 15px;
+      margin: 15px 15px 15px 15px;
+      padding: 5px;
+      justify-content: center;
+      align-items: center;
+      display: flex;
+      flex-direction: column;
     }
 
-    .data-item p {
-      font-size: 32px;
-      font-weight: bold;
-      color: #6EB7FF;
+    .label {
+      color: black;
+      margin-right: 20px;
     }
 
-    .data-head {
-      text-align: center;
-      font-size: 36px;
+    .value {
       font-weight: bold;
-      margin: 40px auto 10px;
-      width: 80%;
-      background-color: #FFF;
-      padding: 20px;
-      border-radius: 20px;
-      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+      color: black;
     }
+
+    .status {
+      font-weight: bold;
+      color: #ffcc00;
+    }
+
+    
   </style>
 </head>
+
 <body>
-
-  <div class="data-head">Realtime Sensor Readings</div>
-
-  <div class="data-container">
-    <div class="data-item">
-      <h2>Temperature</h2>
-      <p id="temperature">-- &#8451;</p>
+  <h1>IoT Sensor Dashboard</h1>
+  <div class="main-container">
+    <div class="data-container"><span class="label">Temperature:</span> <span id="temp" class="value">-- °C</span> </div>
+    <div class="data-container"><span class="label">Humidity:</span> <span id="hum" class="value">--</span> %</div>
+    <div class="data-container"><span class="label">Air Quality (MQ135):</span> <span id="air" class="value">--</span>
     </div>
-
-    <div class="data-item">
-      <h2>Humidity</h2>
-      <p id="humidity">--%</p>
+    <div class="data-container"><span class="label">Air Status:</span> <span id="airStatus" class="status">--</span>
     </div>
-
-    <div class="data-item">
-      <h2>Air Quality</h2>
-      <p id="airQuality">--</p>
-    </div>
-
-    <div class="data-item">
-      <h2>Motion</h2>
-      <p id="motion">--</p>
+    <div class="data-container"><span class="label">Motion Detected:</span> <span id="motion" class="value">--</span>
     </div>
   </div>
-
-  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
-
   <script>
-    // Your Firebase configuration
-    var firebaseConfig = {
+    const firebaseConfig = {
       apiKey: "AIzaSyCnex2McMTxDBygOzCshKST9weyBfIIJ48",
-      authDomain: "iot-proj1-dht11.firebaseapp.com",
-      databaseURL: "https://iot-proj1-dht11-default-rtdb.firebaseio.com",
-      projectId: "iot-proj1-dht11",
-      storageBucket: "iot-proj1-dht11.appspot.com",
-      messagingSenderId: "817870617672",
-      appId: "1:817870617672:web:b27caacbf8342dab4dac7d",
-      measurementId: "G-690LQGKR98"
+      databaseURL: "https://iot-proj1-dht11-default-rtdb.firebaseio.com/"
     };
-
     firebase.initializeApp(firebaseConfig);
-    var database = firebase.database();
 
-    // Fetch and display Temperature
-    database.ref('FirebaseIot/temperature').on('value', function(snapshot) {
-      document.getElementById('temperature').innerHTML = snapshot.val() + " &#8451;";
-    });
+    const dbRef = firebase.database().ref("FirebaseIot");
 
-    // Fetch and display Humidity
-    database.ref('FirebaseIot/humidity').on('value', function(snapshot) {
-      document.getElementById('humidity').innerHTML = snapshot.val() + "%";
-    });
+    function getAirQualityStatus(value) {
+      if (value < 100) return "Good";
+      else if (value < 200) return "Moderate";
+      else if (value < 300) return "Bad";
+      else return "Hazardous";
+    }
 
-    // Fetch and display Air Quality
-    database.ref('FirebaseIot/airQuality').on('value', function(snapshot) {
-      document.getElementById('airQuality').innerHTML = snapshot.val();
-    });
+    dbRef.on("value", (snapshot) => {
+      const data = snapshot.val();
+      if (!data) return;
 
-    // Fetch and display Motion status
-    database.ref('FirebaseIot/motion').on('value', function(snapshot) {
-      let motion = snapshot.val();
-      document.getElementById('motion').innerHTML = motion == 1 ? "Motion Detected" : "No Motion";
+      document.getElementById("temp").textContent = data.temperature?.toFixed(1) ?? "--";
+      document.getElementById("hum").textContent = data.humidity?.toFixed(1) ?? "--";
+      document.getElementById("air").textContent = data.airQuality ?? "--";
+      document.getElementById("motion").textContent = data.motion === 1 ? "Yes" : "No";
+
+      const status = getAirQualityStatus(data.airQuality);
+      document.getElementById("airStatus").textContent = status;
     });
   </script>
-
 </body>
+
 </html>
