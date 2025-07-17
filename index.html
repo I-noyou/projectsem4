@@ -1,170 +1,84 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>DHT Readings</title>
-	<style type="text/css">
-		body{
-			background-color: #5a4242;
-			font-family: Arial, sans-serif;
-			margin: 0;
-			padding: 0;
-		}
-		.data-container{
-			display: flex;
-			margin: 0;
-			justify-content: space-evenly;
-			width: 60%;
-			margin: 25px auto;
-			padding: 20px;
-			background-color: #FFF;
-			box-shadow: 0 2px 20px rgba(0, 0, 0,0.1);
-			border-radius: 10px;
-		}
+  <meta charset="UTF-8">
+  <title>IoT Sensor Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 50px;
+    }
 
-		.data-item{
-			text-align: center;
-			justify-content: center;
-			align-items: center;
-		}
+    h1 {
+      color: #00ffcc;
+      margin-bottom: 40px;
+    }
 
-		.data-item h2{
-			font-size: 24px;
-			font-weight: bold;
-			margin-bottom: 10px;
-		}
-		#clock{
-			position: absolute;
-			right: 15px;
-			top: 0;
-			width: 80px;
-			height: 40px;
-			
-		}
-		.data-item p{
-			font-size: 50px;
-			font-weight: bold;
-			color: #6EB7FF;
-		}
+    .reading {
+      font-size: 20px;
+      margin: 10px 0;
+    }
 
+    .label {
+      color: #aaaaaa;
+      margin-right: 10px;
+    }
 
-		#motion{
-			justify-content: center;
-			width: 20%;
-			
-		}
+    .value {
+      font-weight: bold;
+      color: #ffffff;
+    }
 
-		.data-head{
-			margin: auto;
-			width: 50%;
-			text-align: center;
-			font-size: 45px;
-			font-weight: bold;
-			margin: 5px auto;
-			padding: 20px;
-			background-color: #FFF;
-			box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-			border-radius: 20px;
-
-
-		}
-
-
-
-	</style>
+    .status {
+      font-weight: bold;
+      color: #ffcc00;
+    }
+  </style>
 </head>
 <body>
-	<div class="data-container" id="clock">
-		clock
-	</div>
-	<div class="data-head">smart warehouse monitoring system</div>
-	
-	<div class="data-container">
-		<div class="data-item">
-			<h2>Temperature</h2>
-			<p class="value" id="temperature">22 &#8451;</p>
-		</div>
-		<div class="data-item">
-			<h2>Humidity</h2>
-			<p class="value" id="humidity">10%</p>
-		</div>
-		<div class="data-item">
-			<h2>AQI</h2>
-			<p class="value" id="humidity">10%</p>
-		</div>
-		
+  <h1>IoT Sensor Dashboard</h1>
 
-		
+  <div class="reading"><span class="label">Temperature:</span> <span id="temp" class="value">--</span> °C</div>
+  <div class="reading"><span class="label">Humidity:</span> <span id="hum" class="value">--</span> %</div>
+  <div class="reading"><span class="label">Air Quality (MQ135):</span> <span id="air" class="value">--</span></div>
+  <div class="reading"><span class="label">Air Status:</span> <span id="airStatus" class="status">--</span></div>
+  <div class="reading"><span class="label">Motion Detected:</span> <span id="motion" class="value">--</span></div>
 
-		
-	</div>
-	<div class=data-container id="motion">
-			
-			<div class="data-item" >
-			<h2>motion detcted</h2>
-			<p class="value" id="air quality">10%</p>
-			</div>
-		
-	</div>
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCnex2McMTxDBygOzCshKST9weyBfIIJ48",
+      databaseURL: "https://iot-proj1-dht11-default-rtdb.firebaseio.com/"
+    };
+    firebase.initializeApp(firebaseConfig);
 
-	<!-- the scripts for products you want to access must be added-->
+    const dbRef = firebase.database().ref("FirebaseIot");
 
-	<script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    function getAirQualityStatus(value) {
+      if (value < 100) return "Good";
+      else if (value < 200) return "Moderate";
+      else if (value < 300) return "Bad";
+      else return "Hazardous";
+    }
 
-	<script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+    dbRef.on("value", (snapshot) => {
+      const data = snapshot.val();
+      if (!data) return;
 
+      document.getElementById("temp").textContent = data.temperature?.toFixed(1) ?? "--";
+      document.getElementById("hum").textContent = data.humidity?.toFixed(1) ?? "--";
+      document.getElementById("air").textContent = data.airQuality ?? "--";
+      document.getElementById("motion").textContent = data.motion === 1 ? "Yes" : "No";
 
-	<script type="module">
-		// Import the functions you need from the SDKs you need
-		import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-		import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js";
-		// TODO: Add SDKs for Firebase products that you want to use
-		// https://firebase.google.com/docs/web/setup#available-libraries
-	  
-		// Your web app's Firebase configuration
-		// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-		const firebaseConfig = {
-		  apiKey: "AIzaSyCnex2McMTxDBygOzCshKST9weyBfIIJ48",
-		  authDomain: "iot-proj1-dht11.firebaseapp.com",
-		  databaseURL: "https://iot-proj1-dht11-default-rtdb.firebaseio.com",
-		  projectId: "iot-proj1-dht11",
-		  storageBucket: "iot-proj1-dht11.firebasestorage.app",
-		  messagingSenderId: "817870617672",
-		  appId: "1:817870617672:web:b27caacbf8342dab4dac7d",
-		  measurementId: "G-690LQGKR98"
-		};
-	  
-		//const app = initializeApp(firebaseConfig);
-		//const analytics = getAnalytics(app);
-
-	  // Initialize Firebase
-	  firebase.initializeApp(firebaseConfig);
-
-
-	  // getting reference to the database
-	  var database = firebase.database();
-
-	  //getting reference to the data we want
-	  var dataRef1 = database.ref('FirebaseIot/humidity');
-	  var dataRef2 = database.ref('FirebaseIot/temperature');
-
-	  //fetch the data
-	  dataRef1.on('value', function(getdata1){
-	  	var humi = getdata1.val();
-	  	document.getElementById('humidity').innerHTML = humi + "%";
-	  })
-
-	   dataRef2.on('value', function(getdata2){
-	  	var temp = getdata2.val();
-	  	document.getElementById('temperature').innerHTML = temp + "&#8451;";
-	  })
-
-
-
-
-
-	</script>
-
+      const status = getAirQualityStatus(data.airQuality);
+      document.getElementById("airStatus").textContent = status;
+    });
+  </script>
 </body>
 </html>
